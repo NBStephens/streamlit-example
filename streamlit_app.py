@@ -176,8 +176,8 @@ def show_homepage(data_info):
         else:
             st.info(f"{homepage}")
 
+import streamlit.components.v1 as components
 
-import base64
 
 def main():
     st.sidebar.image([morpho_logo, psu_logo], width=130, caption=["Duke University", "FEMR Lab"], output_format="PNG")
@@ -211,8 +211,10 @@ def main():
         current_df = pd.read_csv(brain_data)
         with st.beta_expander("View current dataset", expanded=True):
             st.write(current_df)
+    with col2:
+        title = st.empty()
+        components.iframe("https://aleph-viewer.com/", height=500)
 
-    title = st.empty()
 
     st.sidebar.title("About")
     st.sidebar.info(

@@ -8,30 +8,18 @@ import altair as alt
 import streamlit as st
 from collections import namedtuple
 from pathlib import Path
+from PIL import Image
 from typing import Dict, Tuple, Union
 
-"""
-# Welcome to CSATS Morphosource Workshop!
 
-"""
+morpho_logo = "https://www.morphosource.org/themes/morphosource/graphics/morphosource/morphosourceLogo.png"
+psu_logo = "https://www.underconsideration.com/brandnew/archives/penn_state_logo_detail.png"
+tim_pic = "https://sites.psu.edu/wisermurefurp/files/2020/08/Ryan.jpg"
 
-with st.beta_expander("If you have any questions, please reach out:", expanded=True):
-    """ 
-    
-    Slack Chat:speech_balloon: : [CSATS](https://app.slack.com/client/T9HGD7NBY/CTN0FTQCA)\n
-    Email :email: : [Tim Ryan] (tmr21@psu.edu)\n
-    Email :email: : [Nick stephens] (nbs49@psu.edu)\n    
-    
-    """
-
-
-#Have to put ?raw=True at end to get the data
-brain_data = "https://github.com/NBStephens/streamlit-example/blob/master/Data/Powell%20Data%20-%20BrainSize%20vs%20BodySize.csv?raw=true"
-#brain_data = "https://drive.google.com/file/d/1A0QMMa7riZHTXwLid_YITPSKc7y-PpLt/view?usp=sharing?raw=tru"
-
-current_df = pd.read_csv(brain_data)
-st.write(current_df)
-
+st.beta_set_page_config(page_title="RDN Segmentation",
+                        page_icon=tim_pic,
+                        layout='wide',
+                        initial_sidebar_state='auto')
 
 CORRECTIONS = {
     "DOI: ": "DOI ",
@@ -189,45 +177,88 @@ def show_homepage(data_info):
             st.info(f"{homepage}")
 
 
+import base64
+
 def main():
-    """Run this to run the programme"""
-    st.title("Awesome Data Explorer")
-    st.markdown("This app explores data in the Awesome Public Datasets repository.")
+    st.sidebar.image([morpho_logo, psu_logo], width=130, caption=["Duke University", "FEMR Lab"], output_format="PNG")
+    """
+    # Welcome to CSATS Morphosource Workshop!
+
+    """
+
+    col1, col2 = st.beta_columns(2)
+    # Writes out a thing line across the gui page.
+
+    with col1:
+        st.write("---")
+        slack_link = r"https://user-images.githubusercontent.com/819186/51553744-4130b580-1e7c-11e9-889e-486937b69475.png"
+
+
+
+        with st.beta_expander("If you have any questions, please reach out:", expanded=True):
+            """ 
+            
+            Slack Chat:speech_balloon: : [CSATS](https://app.slack.com/client/T9HGD7NBY/CTN0FTQCA)\n
+            Email :email: : [Tim Ryan] (tmr21@psu.edu)\n
+            Email :email: : [Nick stephens] (nbs49@psu.edu)\n    
+        
+            """
+
+        # Have to put ?raw=True at end to get the data
+        brain_data = "https://github.com/NBStephens/streamlit-example/blob/master/Data/Powell%20Data%20-%20BrainSize%20vs%20BodySize.csv?raw=true"
+        # brain_data = "https://drive.google.com/file/d/1A0QMMa7riZHTXwLid_YITPSKc7y-PpLt/view?usp=sharing?raw=tru"
+
+        current_df = pd.read_csv(brain_data)
+        with st.beta_expander("View current dataset", expanded=True):
+            st.write(current_df)
 
     title = st.empty()
 
-    get_awesome_data_repo()
+    st.sidebar.title("About")
+    st.sidebar.info(
+        "This app helps students visualizes scientific data to explore our evolutionary history"
+        "\n\n"
+        "It is maintained by [Nick Stephens](https://github.com/NBStephens/). "
+        "If you have any technical issues please email nbs49@psu.edu"
+    )
 
+main()
+
+with st.beta_expander(label="", expanded=False):
+    '''
+    
+    #get_awesome_data_repo()
+    
     categories_and_files = get_categories_and_file_names()
-
+    
     category_file_count = {k: f"{k} ({len(v)})" for k, v in categories_and_files.items()}
     selected_topic = st.sidebar.selectbox(
         "Select topic",
         options=sorted(categories_and_files.keys()),
         format_func=category_file_count.get,
     )
-
+    
     category_data = categories_and_files[selected_topic]
-
+    
     data_titles = {k: v.get("title") for k, v in category_data.items()}
-
+    
     selected_data = st.sidebar.selectbox(
         "Select data", options=sorted(category_data.keys()), format_func=data_titles.get
     )
-
+    
     show_data_count_by_topic = st.sidebar.checkbox("Show data count by topic", value=True)
-
+    
     selected_data_info = category_data[selected_data]
-
+    
     title.title(selected_data_info["title"])
     data_image = selected_data_info.get("image", None)
     if data_image and data_image != "none":
         st.image(data_image, width=200)
-
+    
     create_info_table(selected_data_info)
-
+    
     show_homepage(selected_data_info)
-
+    
     if show_data_count_by_topic:
         st.title(body="Data count by topic")
         source = pd.DataFrame(
@@ -236,25 +267,15 @@ def main():
                 "Number of data": [len(i) for i in categories_and_files.values()],
             }
         )
-
+    
         chart = (
             alt.Chart(source)
             .mark_bar()
             .encode(alt.Y("Topic", title=""), alt.X("Number of data", title=""))
             .properties(height=600)
         )
-
+    
         text = chart.mark_text(align="left", baseline="middle", dx=3).encode(text="Number of data")
-
+    
         st.altair_chart(chart + text)
-
-    st.sidebar.title("About")
-    st.sidebar.info(
-        "This app shows available data in [Awesome Public Datasets]"
-        "(https://github.com/awesomedata/awesome-public-datasets) repository.\n\n"
-        "It is maintained by [Ali](https://www.linkedin.com/in/aliavnicirik/). "
-        "Check the code at https://github.com/aliavni/awesome-data-explorer"
-    )
-
-
-main()
+    '''

@@ -16,7 +16,7 @@ morpho_logo = "https://www.morphosource.org/themes/morphosource/graphics/morphos
 psu_logo = "https://www.underconsideration.com/brandnew/archives/penn_state_logo_detail.png"
 tim_pic = "https://sites.psu.edu/wisermurefurp/files/2020/08/Ryan.jpg"
 
-st.beta_set_page_config(page_title="RDN Segmentation",
+st.set_page_config(page_title="CSATS Morphosource workshop",
                         page_icon=tim_pic,
                         layout='wide',
                         initial_sidebar_state='auto')

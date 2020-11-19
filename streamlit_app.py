@@ -182,7 +182,7 @@ import base64
 def main():
     st.sidebar.image([morpho_logo, psu_logo], width=130, caption=["Duke University", "FEMR Lab"], output_format="PNG")
     """
-    # Welcome to CSATS Morphosource Workshop!
+    # Welcome to CSATS Morphosource Workshop! :rocket:
 
     """
 

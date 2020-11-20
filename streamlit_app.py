@@ -2,13 +2,17 @@ import io
 import git
 import math
 #import yaml
+import base64
+import pathlib
 import requests
+import numpy as np
 import pandas as pd
 import altair as alt
 import streamlit as st
-from collections import namedtuple
-from pathlib import Path
+import streamlit.components.v1 as components
 from PIL import Image
+from pathlib import Path
+from collections import namedtuple
 from typing import Dict, Tuple, Union
 
 
@@ -176,7 +180,32 @@ def show_homepage(data_info):
         else:
             st.info(f"{homepage}")
 
-import streamlit.components.v1 as components
+
+def download_link(object_to_download, download_filename, download_link_text):
+    """
+    Generates a link to download the given object_to_download.
+
+    object_to_download (str, pd.DataFrame):  The object to be downloaded.
+    download_filename (str): filename and extension of file. e.g. mydata.csv, some_txt_output.txt
+    download_link_text (str): Text to display for download link.
+
+    Examples:
+    download_link(YOUR_DF, 'YOUR_DF.csv', 'Click here to download data!')
+    download_link(YOUR_STRING, 'YOUR_STRING.txt', 'Click here to download your text!')
+
+    Adapted from:
+    https://discuss.streamlit.io/t/heres-a-download-function-that-works-for-dataframes-and-txt/4052
+
+    """
+    if isinstance(object_to_download,pd.DataFrame):
+        object_to_download = object_to_download.to_csv(index=False)
+
+    # some strings <-> bytes conversions necessary here
+    b64 = base64.b64encode(object_to_download.encode()).decode()
+
+    return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
+
+###Begin of main application
 
 
 def main():
@@ -185,35 +214,79 @@ def main():
     # Welcome to CSATS Morphosource Workshop! :skull:
 
     """
+    with st.beta_expander("If you have any questions, please reach out:", expanded=True):
+        """ 
+
+        Slack Chat:speech_balloon: : [CSATS](https://app.slack.com/client/T9HGD7NBY/CTN0FTQCA)\n
+        Email :email: : [Tim Ryan] (tmr21@psu.edu)\n
+        Email :email: : [Nick stephens] (nbs49@psu.edu)\n    
+
+        """
+
+
 
     col1, col2 = st.beta_columns(2)
     # Writes out a thing line across the gui page.
+
 
     with col1:
         st.write("---")
         slack_link = r"https://user-images.githubusercontent.com/819186/51553744-4130b580-1e7c-11e9-889e-486937b69475.png"
 
+        option = st.selectbox('Select dataset',
+                              ('Powell et al., 2017 : Brain to body size', 'Humeral to femoral'))
+
+        st.write('You selected:', option)
 
 
-        with st.beta_expander("If you have any questions, please reach out:", expanded=True):
-            """ 
-            
-            Slack Chat:speech_balloon: : [CSATS](https://app.slack.com/client/T9HGD7NBY/CTN0FTQCA)\n
-            Email :email: : [Tim Ryan] (tmr21@psu.edu)\n
-            Email :email: : [Nick stephens] (nbs49@psu.edu)\n    
-        
-            """
 
         # Have to put ?raw=True at end to get the data
+
         brain_data = "https://github.com/NBStephens/streamlit-example/blob/master/Data/Powell%20Data%20-%20BrainSize%20vs%20BodySize.csv?raw=true"
-        # brain_data = "https://drive.google.com/file/d/1A0QMMa7riZHTXwLid_YITPSKc7y-PpLt/view?usp=sharing?raw=tru"
+        brain_paper = "https://drive.google.com/file/d/1A0QMMa7riZHTXwLid_YITPSKc7y-PpLt/view?usp=sharing?raw=tru"
+
 
         current_df = pd.read_csv(brain_data)
+
+
         with st.beta_expander("View current dataset", expanded=True):
             st.write(current_df)
+            if st.button('Download dataset as a CSV'):
+                tmp_download_link = download_link(current_df,
+                                                  download_filename=f'{str(option)}.csv',
+                                                  download_link_text=f'Click here to download f{str(option)} data!')
+                st.markdown(tmp_download_link, unsafe_allow_html=True)
+
+
+
     with col2:
         title = st.empty()
-        components.iframe("https://aleph-viewer.com/", height=500)
+        option = st.selectbox('Select a display type?',
+                              ('Box plots', 'Scatter plots', 'Pie charts', 'Aleph viewer'))
+
+        st.write('You selected:', option)
+        if str(option) == "Aleph viewer":
+            components.iframe("https://aleph-viewer.com/", height=500)
+        #elif str(option) == "Box plots":
+
+
+    col1_lower, col2_lower = st.beta_columns(2)
+    with col1_lower:
+        with st.beta_expander("Upload PDF"):
+            pdf_file = st.file_uploader("", type=['pdf'])
+        if pdf_file:
+            pdf_view_size_ratio = st.slider("PDF viewer size", min_value=1, max_value=100, value=47)
+            pdf_width = int(np.ceil(1920 * (pdf_view_size_ratio / 100)))
+            pdf_height = int(np.ceil(pdf_width/0.77))
+            base64_pdf = base64.b64encode(pdf_file.read()).decode('utf-8')
+            pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width={pdf_width} height={pdf_height} type="application/pdf">'
+            with st.beta_expander("View PDF"):
+                st.markdown(pdf_display,
+                            unsafe_allow_html=True)
+
+
+    with col2_lower:
+        title = st.empty()
 
 
     st.sidebar.title("About")

@@ -11,7 +11,6 @@ import altair as alt
 import streamlit as st
 import streamlit.components.v1 as components
 from PIL import Image
-from pathlib import Path
 from collections import namedtuple
 from typing import Dict, Tuple, Union
 
@@ -34,17 +33,17 @@ CORRECTIONS = {
 }
 
 @st.cache
-def get_awesome_data_repo():
+def get_CASTS_data_repo():
     """Clones the data catalogue"""
     try:
-        git.Git(".").clone("https://github.com/awesomedata/apd-core")
+        git.Git(".").clone("https://github.com/NBStephens/streamlit-example.git")
     except git.GitCommandError:
         repo = git.Repo("apd-core")
         repo.remotes.origin.pull()
 
 
-@st.cache
-def get_categories_and_file_names() -> Dict:
+#@st.cache(suppress_st_warning=True)
+def get_datasets_and_file_names() -> Dict:
     """Returns a dictionary of categories and files
 
     Returns
@@ -53,33 +52,29 @@ def get_categories_and_file_names() -> Dict:
         Key is the name of the category, value is a dictionary with information on files in that \
         category
     """
-    path = Path("apd-core/core")
-    category_files: Dict = {}
-    for i in path.glob("**/*"):
-        if i.is_dir():
-            continue
+    path = pathlib.Path("Data")
+    data_files = {}
+    for i in path.glob("*.csv"):
+        #st.write(i)
+        file = str(i.parts[-1])
+        data_files.update({str(file).replace(".csv", ""): file})
+    return data_files
 
-        category, file_name = i.parts[-2:]
 
-        file = Path("apd-core/core") / category / file_name
-        # print(file)
-        try:
-            with file.open() as open_file:
-                open_file_content = open_file.read()
-                for old, new in CORRECTIONS.items():
-                    open_file_content = open_file_content.replace(old, new)
-                data_info = yaml.load(open_file_content, Loader=yaml.FullLoader)
+def broken_funciton():
+        with file.open() as open_file:
+            open_file_content = open_file.read()
+            for old, new in CORRECTIONS.items():
+                open_file_content = open_file_content.replace(old, new)
+            #data_info = yaml.load(open_file_content, Loader=yaml.FullLoader)
 
-            if category in category_files:
-                category_files[category][file_name] = data_info
-            else:
-                category_files[category] = {file_name: data_info}
-        except UnicodeDecodeError as err:
-            category_files[category][file_name] = "NOT READABLE"
-            # logging.exception("Error. Could not read %s", file.name, exc_info=err)
-
-    return category_files
-
+        #if category in category_files:
+            #category_files[category][file_name] = data_info
+        #else:
+         #   category_files[category] = {file_name: data_info}
+    #except UnicodeDecodeError as err:
+     #   category_files[category][file_name] = "NOT READABLE"
+        # logging.exception("Error. Could not read %s", file.name, exc_info=err)
 
 def get_data_info(category: str, file_name: str) -> Dict:
     """Returns a dictionary of information on the specified file
@@ -96,7 +91,7 @@ def get_data_info(category: str, file_name: str) -> Dict:
     Dict
         Information on the file
     """
-    path = Path("apd-core/core") / category / file_name
+    path = pathlib.Path("apd-core/core") / category / file_name
 
     with path.open() as open_file:
         data = yaml.load(open_file.read(), Loader=yaml.FullLoader)
@@ -197,7 +192,7 @@ def download_link(object_to_download, download_filename, download_link_text):
     https://discuss.streamlit.io/t/heres-a-download-function-that-works-for-dataframes-and-txt/4052
 
     """
-    if isinstance(object_to_download,pd.DataFrame):
+    if isinstance(object_to_download, pd.DataFrame):
         object_to_download = object_to_download.to_csv(index=False)
 
     # some strings <-> bytes conversions necessary here
@@ -209,6 +204,12 @@ def download_link(object_to_download, download_filename, download_link_text):
 
 
 def main():
+    get_CASTS_data_repo()
+
+    data_dict = get_datasets_and_file_names()
+
+    csv_list = [k for k, v in data_dict.items()]
+
     st.sidebar.image([morpho_logo, psu_logo], width=130, caption=["Duke University", "FEMR Lab"], output_format="PNG")
     """
     # Welcome to CSATS Morphosource Workshop! :skull:
@@ -233,20 +234,18 @@ def main():
         st.write("---")
         slack_link = r"https://user-images.githubusercontent.com/819186/51553744-4130b580-1e7c-11e9-889e-486937b69475.png"
 
-        option = st.selectbox('Select dataset',
-                              ('Powell et al., 2017 : Brain to body size', 'Humeral to femoral'))
+        option = st.selectbox('Select dataset', csv_list, key=9990237)
 
         st.write('You selected:', option)
-
-
 
         # Have to put ?raw=True at end to get the data
 
         brain_data = "https://github.com/NBStephens/streamlit-example/blob/master/Data/Powell%20Data%20-%20BrainSize%20vs%20BodySize.csv?raw=true"
-        brain_paper = "https://drive.google.com/file/d/1A0QMMa7riZHTXwLid_YITPSKc7y-PpLt/view?usp=sharing?raw=tru"
+        brain_paper = "https://github.com/NBStephens/streamlit-example/blob/master/Data/Powell%20et%20al.%2C%202017.pdfraw=truu"
 
 
-        current_df = pd.read_csv(brain_data)
+        current_df = pd.read_csv(f"Data/{data_dict[option]}")
+        current_pdf = brain_paper
 
 
         with st.beta_expander("View current dataset", expanded=True):
@@ -254,7 +253,7 @@ def main():
             if st.button('Download dataset as a CSV'):
                 tmp_download_link = download_link(current_df,
                                                   download_filename=f'{str(option)}.csv',
-                                                  download_link_text=f'Click here to download f{str(option)} data!')
+                                                  download_link_text=f'Click here to download {str(option)} data!')
                 st.markdown(tmp_download_link, unsafe_allow_html=True)
 
 
@@ -266,7 +265,8 @@ def main():
 
         st.write('You selected:', option)
         if str(option) == "Aleph viewer":
-            components.iframe("https://aleph-viewer.com/", height=500)
+            aleph_view_height = st.slider("Viewer height", min_value=1, max_value=1080, value=47)
+            components.iframe("https://aleph-viewer.com/", height=int(aleph_view_height))
         #elif str(option) == "Box plots":
 
 
@@ -275,12 +275,12 @@ def main():
         with st.beta_expander("Upload PDF"):
             pdf_file = st.file_uploader("", type=['pdf'])
         if pdf_file:
-            pdf_view_size_ratio = st.slider("PDF viewer size", min_value=1, max_value=100, value=47)
-            pdf_width = int(np.ceil(1920 * (pdf_view_size_ratio / 100)))
-            pdf_height = int(np.ceil(pdf_width/0.77))
-            base64_pdf = base64.b64encode(pdf_file.read()).decode('utf-8')
-            pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width={pdf_width} height={pdf_height} type="application/pdf">'
-            with st.beta_expander("View PDF"):
+            with st.beta_expander("View or hide PDF"):
+                pdf_view_size_ratio = st.slider("PDF viewer size", min_value=1, max_value=100, value=47)
+                pdf_width = int(np.ceil(1920 * (pdf_view_size_ratio / 100)))
+                pdf_height = int(np.ceil(pdf_width / 0.77))
+                base64_pdf = base64.b64encode(pdf_file.read()).decode('utf-8')
+                pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width={pdf_width} height={pdf_height} type="application/pdf">'
                 st.markdown(pdf_display,
                             unsafe_allow_html=True)
 
